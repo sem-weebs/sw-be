@@ -7,8 +7,8 @@ A Project Repository for Semantic Web Final Project Back End
 Run these first before using this BE Project:
 
 ```txt
-python3 -m venv .venv
-.venv\Scripts\activate
+python -m venv .venv
+.\.env\Scripts\activate
 pip install -r requirements.txt
 ```
 
@@ -17,5 +17,5 @@ pip install -r requirements.txt
 Run this script in the root of project
 
 ```txt
-flask --app wsgi run
+python wsgi.py
 ```
