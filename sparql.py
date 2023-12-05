@@ -76,4 +76,4 @@ def get_account_details(account_username: str):
         GROUP BY ?item ?itemDescription ?birthDate ?gender ?birthName ?nativeName ?image ?citizenship ?signature ?workDate
       """)
     
-    return sparql.queryAndConvert()["results"]["bindings"]
+    return sparql.queryAndConvert()["results"]["bindings"][0]
