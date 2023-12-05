@@ -21,7 +21,7 @@ def search():
     try:
         return sparql.search(query, categories_list)
     except:
-        return "An error occurred while fetching your search results.", status.HTTP_500_BAD_REQUEST
+        return "An error occurred while fetching your search results.", status.HTTP_500_INTERNAL_SERVER_ERROR
     
 @app.route("/suggestions", methods=["GET"])
 def suggestions():
@@ -34,7 +34,7 @@ def suggestions():
     try:
         return sparql.get_suggestions(query)
     except:
-        return "An error occurred while fetching your search results.", status.HTTP_500_BAD_REQUEST
+        return "An error occurred while fetching your search results.", status.HTTP_500_INTERNAL_SERVER_ERROR
 
 @app.route("/details", methods=["GET"])
 def details():
@@ -46,4 +46,4 @@ def details():
     try:
         return sparql.get_account_details(account_username)
     except:
-        return "An error occurred while fetching your search results.", status.HTTP_500_BAD_REQUEST
+        return "An error occurred while fetching your search results.", status.HTTP_500_INTERNAL_SERVER_ERROR
