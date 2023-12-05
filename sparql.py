@@ -48,7 +48,7 @@ PREFIX swer:  <http://semweebs.org/resource/>
 PREFIX vcard: <http://www.w3.org/2006/vcard/ns#>
 PREFIX xsd:   <http://www.w3.org/2001/XMLSchema#>
 
-SELECT DISTINCT ?item ?itemDescription ?birthDate ?gender ?birthName ?nativeName ?image ?citizenship ?signature ?occupations ?workDate (GROUP_CONCAT(?category; separator=",") AS ?categories) ?audienceCountry ?authenticEngagement ?country ?engagementAvg ?followers ?link ?rank ?title WHERE {{
+SELECT DISTINCT ?item ?itemDescription ?birthDate ?birthPlace ?gender ?birthName ?nativeName ?image ?citizenship ?signature ?occupations ?workDate (GROUP_CONCAT(?category; separator=",") AS ?categories) ?audienceCountry ?authenticEngagement ?country ?engagementAvg ?followers ?link ?rank ?title WHERE {{
   {{
   ?usernameIRI rdfs:label "{account_username}" ;
                swep:audienceCountry [ rdfs:label ?audienceCountry ] ;
@@ -67,37 +67,58 @@ SELECT DISTINCT ?item ?itemDescription ?birthDate ?gender ?birthName ?nativeName
         SERVICE <https://query.wikidata.org/sparql> {{
           SERVICE wikibase:label {{ bd:serviceParam wikibase:language "en". }}
           {{
-            SELECT DISTINCT ?item ?itemDescription ?birthDate ?gender ?birthName ?nativeName ?image ?citizenship ?signature (GROUP_CONCAT(?occupation; separator=",") AS ?occupations) ?workDate WHERE {{
+            SELECT DISTINCT ?item ?itemDescription ?birthDate ?gender ?birthName ?birthPlace ?nativeName ?image ?citizenship ?signature (GROUP_CONCAT(?occupation; separator=",") AS ?occupations) ?workDate WHERE {{
             ?item p:P2003 [ps:P2003 "{account_username}"].
               
-              ?item p:P1477 [ps:P1477 ?birthName] ;
-                    p:P1559 [ps:P1559 ?nativeName] ;
-                    p:P18 [ ps:P18 ?image ] ;
-                    p:P21 [ ps:P21 ?genderIRI ] ;
-                    p:P27 [ ps:P27 ?citizenshipIRI ] ;
-                    p:P109 [ ps:P109 ?signature ] ;
-                    p:P569 [ psv:P569 [ wikibase:timeValue ?birthDate ] ] ;
-                    p:P19 [ ps:P19 ?birthPlaceIRI] ;
-                    p:P2031 [ psv:P2031 [ wikibase:timeValue ?workDate ] ];
-                    p:P106 [ ps:P106 ?occupationIRI ] .
-              
+            OPTIONAL {{
+              ?item p:P1477 [ps:P1477 ?birthName] .
+            }}
+            OPTIONAL {{
+              ?item p:P1559 [ps:P1559 ?nativeName] .
+            }}
+            OPTIONAL {{
+              ?item p:P18 [ ps:P18 ?image ] .
+            }}
+            OPTIONAL {{
+              ?item p:P21 [ ps:P21 ?genderIRI ] .
+
               ?genderIRI rdfs:label ?gender .
               FILTER(LANG(?gender) = "en")
-            
+            }}
+            OPTIONAL {{
+              ?item p:P27 [ ps:P27 ?citizenshipIRI ] .
+
               ?citizenshipIRI rdfs:label ?citizenship .
               FILTER(LANG(?citizenship) = "en")
-              
-              ?occupationIRI rdfs:label ?occupation .
-              FILTER(LANG(?occupation) = "en")
-              
+            }}
+            OPTIONAL {{
+              ?item p:P109 [ ps:P109 ?signature ] .
+            }}
+            OPTIONAL {{
+              ?item p:P569 [ psv:P569 [ wikibase:timeValue ?birthDate ] ] .
+            }}
+            OPTIONAL {{
+              ?item p:P19 [ ps:P19 ?birthPlaceIRI] .
+
               ?birthPlaceIRI rdfs:label ?birthPlace .
               FILTER(LANG(?birthPlace) = "en")
-            }} GROUP BY ?item ?itemDescription ?birthDate ?gender ?birthName ?nativeName ?image ?citizenship ?signature ?workDate
+            }}
+            OPTIONAL {{
+              ?item p:P2031 [ psv:P2031 [ wikibase:timeValue ?workDate ] ] .
+            }}
+            OPTIONAL {{
+              ?item p:P106 [ ps:P106 ?occupationIRI ] .
+
+              ?occupationIRI rdfs:label ?occupation .
+              FILTER(LANG(?occupation) = "en")
+            }}
+              
+            }} GROUP BY ?item ?itemDescription ?birthDate ?gender ?birthName ?birthPlace ?nativeName ?image ?citizenship ?signature ?workDate
           }}
         }}
       }}
     }}
-    GROUP BY ?item ?itemDescription ?birthDate ?gender ?birthName ?nativeName ?image ?citizenship ?signature ?workDate ?audienceCountry ?authenticEngagement ?country ?engagementAvg ?followers ?link ?rank ?title ?occupations
+    GROUP BY ?item ?itemDescription ?birthDate ?gender ?birthName ?birthPlace ?nativeName ?image ?citizenship ?signature ?workDate ?audienceCountry ?authenticEngagement ?country ?engagementAvg ?followers ?link ?rank ?title ?occupations
       """)
     
     return sparql.queryAndConvert()["results"]["bindings"][0]
