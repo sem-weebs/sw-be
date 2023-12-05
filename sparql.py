@@ -100,4 +100,4 @@ SELECT DISTINCT ?item ?itemDescription ?birthDate ?gender ?birthName ?nativeName
     GROUP BY ?item ?itemDescription ?birthDate ?gender ?birthName ?nativeName ?image ?citizenship ?signature ?workDate ?audienceCountry ?authenticEngagement ?country ?engagementAvg ?followers ?link ?rank ?title ?occupations
       """)
     
-    return sparql.queryAndConvert()["results"]["bindings"]
+    return sparql.queryAndConvert()["results"]["bindings"][0]
