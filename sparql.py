@@ -2,8 +2,18 @@ from typing import List
 from SPARQLWrapper import JSON, SPARQLWrapper
 import json
 
+url = "http://localhost:9999/blazegraph/namespace/kb/sparql"
+
+try:
+   with open("./.enviro") as f:
+      url = f.read().strip()
+except Exception:
+   pass
+
+print(f"{url=}")
+
 sparql = SPARQLWrapper(
-    "http://localhost:9999/blazegraph/namespace/kb/sparql"
+    url
 )
 
 sparql.setReturnFormat(JSON)
@@ -21,7 +31,7 @@ def search(query: str, category_list: List[str]):
 
     print(cat_filter)
     qq = f"""
-      PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+    PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
     PREFIX swep: <http://semweebs.org/property/>
     PREFIX bd: <http://www.bigdata.com/rdf#>
     PREFIX wikibase: <http://wikiba.se/ontology#>
@@ -55,7 +65,6 @@ def search(query: str, category_list: List[str]):
     }} GROUP BY ?username ?title ?image
     {cat_filter}
     """
-    print(qq)
     sparql.setQuery(qq)
     
     return sparql.queryAndConvert()["results"]["bindings"]
