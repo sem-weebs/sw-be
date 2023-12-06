@@ -46,12 +46,12 @@ def search(query: str, category_list: List[str]):
             OPTIONAL {{
               ?itemIRI p:P18 [ ps:P18 ?image ] .
             }}
-            FILTER(CONTAINS(LCASE(?username), "{query}"))
+            FILTER(CONTAINS(LCASE(?username), LCASE("{query}")))
           }} LIMIT 1
         }}
       }}
 
-      FILTER(CONTAINS(LCASE(?username), "{query}"))
+      FILTER(CONTAINS(LCASE(?username), LCASE("{query}")))
     }} GROUP BY ?username ?title ?image
     {cat_filter}
     """
