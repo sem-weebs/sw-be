@@ -12,9 +12,18 @@ CORS(app)
 @app.route("/search", methods=["GET"])
 def search():
     args = request.args
+    # print(args)
     query = args.get("q")
+    # print(query)
     categories = args.get("categories")
-    categories_list = categories.split(";")
+    # print(categories)
+
+    if (categories is not None):
+        categories_list = categories.split(";")
+    else:
+        categories_list = []
+
+    # print(categories_list)
 
     if not query:
         return "Search query not specified.", status.HTTP_400_BAD_REQUEST

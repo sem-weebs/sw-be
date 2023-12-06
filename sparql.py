@@ -1,3 +1,4 @@
+from typing import List
 from SPARQLWrapper import JSON, SPARQLWrapper
 import json
 
@@ -7,17 +8,55 @@ sparql = SPARQLWrapper(
 
 sparql.setReturnFormat(JSON)
 
-def search(query: str, category_list: list):
+def search(query: str, category_list: List[str]):
     if len(category_list) > 0:
-      filter = f"HAVING(regex(?genres, \"{category_list[0].capitalize()}\")"
+      cat_filter = f"HAVING(regex(?categories, \"{category_list[0]}\", \"i\")"
       for i in range(1, len(category_list)):
-        filter += f" || regex(?genres, \"{category_list[i].capitalize()}\")"
-      filter += ")"
+        cat_filter += f" || regex(?categories, \"{category_list[i]}\", \"i\")"
+      cat_filter += ")"
     else:
-      filter = ""
+      cat_filter = ""
 
-    print(filter)
-    sparql.setQuery(""" """)
+      
+
+    print(cat_filter)
+    qq = f"""
+      PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+    PREFIX swep: <http://semweebs.org/property/>
+    PREFIX bd: <http://www.bigdata.com/rdf#>
+    PREFIX wikibase: <http://wikiba.se/ontology#>
+    PREFIX p: <http://www.wikidata.org/prop/>
+    PREFIX ps: <http://www.wikidata.org/prop/statement/>
+    PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+
+    SELECT DISTINCT ?username ?title ?image (GROUP_CONCAT(?category; SEPARATOR=",") as ?categories) WHERE {{
+      ?usernameIRI rdfs:label ?username ;
+                  swep:title ?title .
+      
+      OPTIONAL {{ 
+        ?usernameIRI swep:category ?categoryIRI .
+        ?categoryIRI rdfs:label ?category 
+      }}
+
+      SERVICE <https://query.wikidata.org/sparql> {{
+        SERVICE wikibase:label {{ bd:serviceParam wikibase:language "en". }}
+        {{
+          SELECT DISTINCT ?image WHERE {{
+            ?itemIRI p:P2003 [ps:P2003 ?username] .
+            OPTIONAL {{
+              ?itemIRI p:P18 [ ps:P18 ?image ] .
+            }}
+            FILTER(CONTAINS(LCASE(?username), "{query}"))
+          }} LIMIT 1
+        }}
+      }}
+
+      FILTER(CONTAINS(LCASE(?username), "{query}"))
+    }} GROUP BY ?username ?title ?image
+    {cat_filter}
+    """
+    print(qq)
+    sparql.setQuery(qq)
     
     return sparql.queryAndConvert()["results"]["bindings"]
 
