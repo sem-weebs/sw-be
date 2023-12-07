@@ -4,11 +4,11 @@ import json
 
 url = "http://localhost:9999/blazegraph/namespace/kb/sparql"
 
-# try:
-#    with open("./.enviro") as f:
-#       url = f.read().strip()
-# except Exception:
-#    pass
+try:
+   with open("./.enviro") as f:
+      url = f.read().strip()
+except Exception:
+   pass
 
 print(f"{url=}")
 
@@ -120,33 +120,34 @@ def search(query: str, category_list: List[str]):
 
 def get_suggestions(account_username: str):
     sparql.setQuery(f""" 
-    PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-    PREFIX swep: <http://semweebs.org/property/>
-    PREFIX bd: <http://www.bigdata.com/rdf#>
-    PREFIX wikibase: <http://wikiba.se/ontology#>
-    PREFIX p: <http://www.wikidata.org/prop/>
-    PREFIX ps: <http://www.wikidata.org/prop/statement/>
-    PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX swep: <http://semweebs.org/property/>
+PREFIX bd: <http://www.bigdata.com/rdf#>
+PREFIX wikibase: <http://wikiba.se/ontology#>
+PREFIX p: <http://www.wikidata.org/prop/>
+PREFIX ps: <http://www.wikidata.org/prop/statement/>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 
-    SELECT DISTINCT ?username ?title ?image (GROUP_CONCAT(?category; SEPARATOR=",") as ?categories) WHERE {{
-                    
-      SELECT DISTINCT ?sampledCategory WHERE {{
-        ?userIRI rdfs:label "{account_username}" ;
-                swep:category ?categoryIRI .
-        ?categoryIRI rdfs:label ?sampledCategory
-      }} LIMIT 1
-      
-      ?usernameIRI rdfs:label ?username ;
-                  swep:title ?title .
-      OPTIONAL {{
-        ?usernameIRI swep:category ?categoryIRI .
-        ?categoryIRI rdfs:label ?category
-      }}
-      FILTER(CONTAINS(LCASE(?categories), LCASE(?sampledCategory)))
-    }} 
-    GROUP BY ?username ?title ?image
-    HAVING(?username != "{account_username}")
-    LIMIT 10
+SELECT DISTINCT ?username ?title (GROUP_CONCAT(?category; SEPARATOR=",") as ?categories) WHERE {{
+  ?usernameIRI rdfs:label ?username .
+  OPTIONAL {{
+      ?usernameIRI swep:title ?title .
+  }}          
+  OPTIONAL {{
+    ?usernameIRI swep:category ?categoryIRI .
+    ?categoryIRI rdfs:label ?category 
+  }}
+  {{  
+    SELECT DISTINCT ?sampledCategory WHERE {{
+      ?usernameIRI rdfs:label "{account_username}" ;
+              swep:category ?categoryIRI .
+      ?categoryIRI rdfs:label ?sampledCategory .
+    }} LIMIT 1
+  }}
+}}
+GROUP BY ?username ?title ?sampledCategory
+HAVING(regex(?categories, ?sampledCategory, "i"))
+LIMIT 10
     """)
 
     return sparql.queryAndConvert()["results"]["bindings"]
