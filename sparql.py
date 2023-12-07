@@ -30,7 +30,7 @@ def search(query: str, category_list: List[str]):
 
       
 
-    print(f"{cat_filter=}")
+    # print(f"{cat_filter=}")
     q1 = f"""
     PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
     PREFIX swep: <http://semweebs.org/property/>
@@ -40,8 +40,9 @@ def search(query: str, category_list: List[str]):
     PREFIX ps: <http://www.wikidata.org/prop/statement/>
     PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 
-    SELECT DISTINCT ?username ?title (GROUP_CONCAT(?category; SEPARATOR=",") as ?categories) WHERE {{
-        ?usernameIRI rdfs:label ?username .
+    SELECT DISTINCT ?username ?title ?rank (GROUP_CONCAT(?category; SEPARATOR=",") as ?categories) WHERE {{
+        ?usernameIRI rdfs:label ?username ;
+                     swep:rank ?rank .
 
         OPTIONAL {{
         ?usernameIRI swep:title ?title .
@@ -52,7 +53,7 @@ def search(query: str, category_list: List[str]):
           ?categoryIRI rdfs:label ?category 
         }}
         FILTER(CONTAINS(LCASE(?username), LCASE("{query}")) || CONTAINS(LCASE(?title), LCASE("{query}")))
-    }}  GROUP BY ?username ?title
+    }}  GROUP BY ?username ?title ?rank
         {cat_filter}
     """
 
