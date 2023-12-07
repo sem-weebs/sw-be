@@ -131,7 +131,8 @@ def get_suggestions(account_username: str):
     PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 
     SELECT DISTINCT ?username ?title (GROUP_CONCAT(?category; SEPARATOR=";") as ?categories) WHERE {{
-      ?usernameIRI rdfs:label ?username .
+      ?usernameIRI rdfs:label ?username ;
+          swep:rank ?rank .
       OPTIONAL {{
           ?usernameIRI swep:title ?title .
       }}          
