@@ -40,7 +40,7 @@ def search(query: str, category_list: List[str]):
     PREFIX ps: <http://www.wikidata.org/prop/statement/>
     PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 
-    SELECT DISTINCT ?username ?title ?rank (GROUP_CONCAT(?category; SEPARATOR=",") as ?categories) WHERE {{
+    SELECT DISTINCT ?username ?title ?rank (GROUP_CONCAT(?category; SEPARATOR=";") as ?categories) WHERE {{
         ?usernameIRI rdfs:label ?username ;
                      swep:rank ?rank .
 
@@ -130,7 +130,7 @@ def get_suggestions(account_username: str):
     PREFIX ps: <http://www.wikidata.org/prop/statement/>
     PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 
-    SELECT DISTINCT ?username ?title (GROUP_CONCAT(?category; SEPARATOR=",") as ?categories) WHERE {{
+    SELECT DISTINCT ?username ?title (GROUP_CONCAT(?category; SEPARATOR=";") as ?categories) WHERE {{
       ?usernameIRI rdfs:label ?username .
       OPTIONAL {{
           ?usernameIRI swep:title ?title .
@@ -220,7 +220,7 @@ PREFIX swer:  <http://semweebs.org/resource/>
 PREFIX vcard: <http://www.w3.org/2006/vcard/ns#>
 PREFIX xsd:   <http://www.w3.org/2001/XMLSchema#>
 
-SELECT DISTINCT ?item ?itemDescription ?birthDate ?birthPlace ?gender ?birthName ?nativeName ?image ?citizenship ?signature ?occupations ?workDate (GROUP_CONCAT(?category; separator=",") AS ?categories) ?audienceCountry ?authenticEngagement ?country ?engagementAvg ?followers ?link ?rank ?title WHERE {{
+SELECT DISTINCT ?item ?itemDescription ?birthDate ?birthPlace ?gender ?birthName ?nativeName ?image ?citizenship ?signature ?occupations ?workDate (GROUP_CONCAT(?category; separator=";") AS ?categories) ?audienceCountry ?authenticEngagement ?country ?engagementAvg ?followers ?link ?rank ?title WHERE {{
   {{
   ?usernameIRI rdfs:label "{account_username}" ;
                swep:audienceCountry [ rdfs:label ?audienceCountry ] ;
@@ -241,7 +241,7 @@ SELECT DISTINCT ?item ?itemDescription ?birthDate ?birthPlace ?gender ?birthName
         SERVICE <https://query.wikidata.org/sparql> {{
           SERVICE wikibase:label {{ bd:serviceParam wikibase:language "en". }}
           {{
-            SELECT DISTINCT ?item ?itemDescription ?birthDate ?gender ?birthName ?birthPlace ?nativeName ?image ?citizenship ?signature (GROUP_CONCAT(?occupation; separator=",") AS ?occupations) ?workDate WHERE {{
+            SELECT DISTINCT ?item ?itemDescription ?birthDate ?gender ?birthName ?birthPlace ?nativeName ?image ?citizenship ?signature (GROUP_CONCAT(?occupation; separator=";") AS ?occupations) ?workDate WHERE {{
             ?item p:P2003 [ps:P2003 "{account_username}"].
               
             OPTIONAL {{
