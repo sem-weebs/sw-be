@@ -36,8 +36,6 @@ def search():
 def suggestions():
     args = request.args
     account_username = args.get("username")
-    
-    print(account_username)
 
     if not account_username:
         return "Search query not specified.", status.HTTP_400_BAD_REQUEST

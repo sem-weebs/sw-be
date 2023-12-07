@@ -55,6 +55,7 @@ def search(query: str, category_list: List[str]):
         FILTER(CONTAINS(LCASE(?username), LCASE("{query}")) || CONTAINS(LCASE(?title), LCASE("{query}")))
     }}  GROUP BY ?username ?title ?rank
         {cat_filter}
+        ORDER BY ?rank
     """
 
     # print(q1)
