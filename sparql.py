@@ -119,38 +119,80 @@ def search(query: str, category_list: List[str]):
     return joined_data
 
 def get_suggestions(account_username: str):
-    sparql.setQuery(f""" 
-PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-PREFIX swep: <http://semweebs.org/property/>
-PREFIX bd: <http://www.bigdata.com/rdf#>
-PREFIX wikibase: <http://wikiba.se/ontology#>
-PREFIX p: <http://www.wikidata.org/prop/>
-PREFIX ps: <http://www.wikidata.org/prop/statement/>
-PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+    q1 = f""" 
+    PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+    PREFIX swep: <http://semweebs.org/property/>
+    PREFIX bd: <http://www.bigdata.com/rdf#>
+    PREFIX wikibase: <http://wikiba.se/ontology#>
+    PREFIX p: <http://www.wikidata.org/prop/>
+    PREFIX ps: <http://www.wikidata.org/prop/statement/>
+    PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 
-SELECT DISTINCT ?username ?title (GROUP_CONCAT(?category; SEPARATOR=",") as ?categories) WHERE {{
-  ?usernameIRI rdfs:label ?username .
-  OPTIONAL {{
-      ?usernameIRI swep:title ?title .
-  }}          
-  OPTIONAL {{
-    ?usernameIRI swep:category ?categoryIRI .
-    ?categoryIRI rdfs:label ?category 
-  }}
-  {{  
-    SELECT DISTINCT ?sampledCategory WHERE {{
-      ?usernameIRI rdfs:label "{account_username}" ;
-              swep:category ?categoryIRI .
-      ?categoryIRI rdfs:label ?sampledCategory .
-    }} LIMIT 1
-  }}
-}}
-GROUP BY ?username ?title ?sampledCategory
-HAVING(regex(?categories, ?sampledCategory, "i"))
-LIMIT 10
-    """)
+    SELECT DISTINCT ?username ?title (GROUP_CONCAT(?category; SEPARATOR=",") as ?categories) WHERE {{
+      ?usernameIRI rdfs:label ?username .
+      OPTIONAL {{
+          ?usernameIRI swep:title ?title .
+      }}          
+      OPTIONAL {{
+        ?usernameIRI swep:category ?categoryIRI .
+        ?categoryIRI rdfs:label ?category 
+      }}
+      {{  
+        SELECT DISTINCT ?sampledCategory WHERE {{
+          ?usernameIRI rdfs:label "{account_username}" ;
+                  swep:category ?categoryIRI .
+          ?categoryIRI rdfs:label ?sampledCategory .
+        }} LIMIT 1
+      }}
+    }}
+    GROUP BY ?username ?title ?sampledCategory
+    HAVING(regex(?categories, ?sampledCategory, "i"))
+    LIMIT 10
+    """
+    sparql.setQuery(q1)
 
-    return sparql.queryAndConvert()["results"]["bindings"]
+    local = sparql.queryAndConvert()["results"]["bindings"]
+    username_values = ""
+
+    for row in local:
+       username_values += f"\"{row['username']['value']}\"" + " "
+
+    q2 = f"""
+    PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+    PREFIX swep: <http://semweebs.org/property/>
+    PREFIX bd: <http://www.bigdata.com/rdf#>
+    PREFIX wikibase: <http://wikiba.se/ontology#>
+    PREFIX p: <http://www.wikidata.org/prop/>
+    PREFIX ps: <http://www.wikidata.org/prop/statement/>
+    PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+
+    SELECT ?username ?image WHERE {{
+      OPTIONAL {{
+        SERVICE <https://query.wikidata.org/sparql> {{
+          SERVICE wikibase:label {{ bd:serviceParam wikibase:language "en". }}
+          {{
+            SELECT DISTINCT ?username (COALESCE(SAMPLE(?image), "") AS ?image) WHERE {{
+              VALUES ?username {{ {username_values.strip()} }}
+              ?itemIRI p:P2003 [ ps:P2003 ?username ] .
+              OPTIONAL {{ ?itemIRI p:P18 [ ps:P18 ?image ] }}
+            }} GROUP BY ?username
+          }}
+        }}
+      }}
+    }}
+    """
+    sparql.setQuery(q2)
+
+    res_images = sparql.queryAndConvert()["results"]["bindings"]
+
+    image_by_username = {item['username']['value']: item['image'] for item in res_images}
+
+    joined_data = [
+       {**item, "image": image_by_username.get(item['username']['value'])}
+       for item in local
+    ]
+
+    return joined_data
 
 def get_account_details(account_username: str):
     sparql.setQuery(f"""
