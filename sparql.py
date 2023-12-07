@@ -4,11 +4,11 @@ import json
 
 url = "http://localhost:9999/blazegraph/namespace/kb/sparql"
 
-try:
-   with open("./.enviro") as f:
-      url = f.read().strip()
-except Exception:
-   pass
+# try:
+#    with open("./.enviro") as f:
+#       url = f.read().strip()
+# except Exception:
+#    pass
 
 print(f"{url=}")
 
@@ -87,35 +87,24 @@ def get_suggestions(account_username: str):
     PREFIX ps: <http://www.wikidata.org/prop/statement/>
     PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 
-    SELECT DISTINCT ?sampledCategory WHERE {{
-      ?userIRI rdfs:label "{account_username}" ;
-              swep:category ?categoryIRI .
-      ?categoryIRI rdfs:label ?sampledCategory
-    }} LIMIT 1
-
     SELECT DISTINCT ?username ?title ?image (GROUP_CONCAT(?category; SEPARATOR=",") as ?categories) WHERE {{
+                    
+      SELECT DISTINCT ?sampledCategory WHERE {{
+        ?userIRI rdfs:label "{account_username}" ;
+                swep:category ?categoryIRI .
+        ?categoryIRI rdfs:label ?sampledCategory
+      }} LIMIT 1
+      
       ?usernameIRI rdfs:label ?username ;
                   swep:title ?title .
       OPTIONAL {{
         ?usernameIRI swep:category ?categoryIRI .
         ?categoryIRI rdfs:label ?category
       }}
-      SERVICE <https://query.wikidata.org/sparql> {{
-        SERVICE wikibase:label {{ bd:serviceParam wikibase:language "en". }}
-        {{
-          SELECT DISTINCT ?image WHERE {{
-            ?itemIRI p:P2003 [ps:P2003 ?username] .
-            OPTIONAL {{
-              ?itemIRI p:P18 [ ps:P18 ?image ] .
-            }}
-            FILTER(CONTAINS(LCASE(?username), LCASE("{account_username}")))
-          }} LIMIT 1
-        }}
-      }}
-      FILTER(CONTAINS(LCASE(?username), LCASE("{account_username}")))
+      FILTER(CONTAINS(LCASE(?categories), LCASE(?sampledCategory)))
     }} 
     GROUP BY ?username ?title ?image
-    HAVING(regex(?categories, ?sampledCategory, "i") && ?username != "{account_username}")
+    HAVING(?username != "{account_username}")
     LIMIT 10
     """)
 
