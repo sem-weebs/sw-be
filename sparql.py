@@ -237,6 +237,7 @@ SELECT DISTINCT ?item ?itemDescription ?birthDate ?birthPlace ?gender ?birthName
                
   }}
   {{
+    OPTIONAL {{
         SERVICE <https://query.wikidata.org/sparql> {{
           SERVICE wikibase:label {{ bd:serviceParam wikibase:language "en". }}
           {{
@@ -288,6 +289,7 @@ SELECT DISTINCT ?item ?itemDescription ?birthDate ?birthPlace ?gender ?birthName
               
             }} GROUP BY ?item ?itemDescription ?birthDate ?gender ?birthName ?birthPlace ?nativeName ?image ?citizenship ?signature ?workDate
           }}
+        }}
         }}
       }}
     }}
