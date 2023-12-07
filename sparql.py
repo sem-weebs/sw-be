@@ -140,10 +140,12 @@ def get_suggestions(account_username: str):
         ?categoryIRI rdfs:label ?category 
       }}
       {{  
-        SELECT DISTINCT ?sampledCategory WHERE {{
+        SELECT DISTINCT (COALESCE(?sampledCategory, "") AS ?sampledCategory) WHERE {{
+          OPTIONAL {{
           ?usernameIRI rdfs:label "{account_username}" ;
                   swep:category ?categoryIRI .
-          ?categoryIRI rdfs:label ?sampledCategory .
+            ?categoryIRI rdfs:label ?sampledCategory .
+          }}
         }} LIMIT 1
       }}
     }}
