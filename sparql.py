@@ -193,8 +193,9 @@ SELECT DISTINCT ?item ?itemDescription ?birthDate ?birthPlace ?gender ?birthName
                swep:engagementAvg ?engagementAvg ;
                swep:followers ?followers ;
                swep:link ?link ;
-               swep:rank ?rank ;
-               swep:title ?title .
+               swep:rank ?rank .
+    
+    OPTIONAL {{ ?usernameIRI swep:title ?title . }}          
     OPTIONAL {{ ?usernameIRI swep:category ?categoryIRI .
               ?categoryIRI rdfs:label ?category }}
                
