@@ -35,13 +35,14 @@ def search():
 @app.route("/suggestions", methods=["GET"])
 def suggestions():
     args = request.args
-    query = args.get("q")
+    account_username = args.get("username")
+    
+    print(account_username)
 
-    if not query:
-        return json.dumps([])
-
+    if not account_username:
+        return "Search query not specified.", status.HTTP_400_BAD_REQUEST
     try:
-        return sparql.get_suggestions(query)
+        return sparql.get_suggestions(account_username)
     except:
         return "An error occurred while fetching your search results.", status.HTTP_500_INTERNAL_SERVER_ERROR
 
