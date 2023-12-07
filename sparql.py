@@ -150,7 +150,7 @@ def get_suggestions(account_username: str):
       }}
     }}
     GROUP BY ?username ?title ?sampledCategory
-    HAVING(regex(?categories, ?sampledCategory, "i"))
+    HAVING(regex(?categories, ?sampledCategory, "i") && ?username != "{account_username}") 
     LIMIT 10
     """
     sparql.setQuery(q1)
