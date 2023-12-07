@@ -18,6 +18,7 @@ sparql = SPARQLWrapper(
 
 sparql.setReturnFormat(JSON)
 
+
 def search(query: str, category_list: List[str]):
     if len(category_list) > 0:
       cat_filter = f"HAVING(regex(?categories, \"{category_list[0]}\", \"i\")"
@@ -29,8 +30,8 @@ def search(query: str, category_list: List[str]):
 
       
 
-    # print(cat_filter)
-    qq = f"""
+    print(f"{cat_filter=}")
+    q1 = f"""
     PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
     PREFIX swep: <http://semweebs.org/property/>
     PREFIX bd: <http://www.bigdata.com/rdf#>
@@ -39,43 +40,83 @@ def search(query: str, category_list: List[str]):
     PREFIX ps: <http://www.wikidata.org/prop/statement/>
     PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 
+    SELECT DISTINCT ?username ?title (GROUP_CONCAT(?category; SEPARATOR=",") as ?categories) WHERE {{
+        ?usernameIRI rdfs:label ?username .
 
-    SELECT DISTINCT ?username ?title ?image ?categories WHERE {{
-      {{
-      	SELECT DISTINCT ?username ?title (GROUP_CONCAT(?category; SEPARATOR=",") as ?categories) WHERE {{
-            ?usernameIRI rdfs:label ?username ;
-                      swep:title ?title .
-            OPTIONAL {{
-              ?usernameIRI swep:category ?categoryIRI .
-              ?categoryIRI rdfs:label ?category 
-            }}
-          	FILTER(CONTAINS(LCASE(?username), LCASE("{query}")) || CONTAINS(LCASE(?title), LCASE("{query}")))
-        }}  GROUP BY ?username ?title
-      }}
-      {{
-        SELECT DISTINCT ?username2 ?image WHERE {{
-          SERVICE <https://query.wikidata.org/sparql> {{
-            SERVICE wikibase:label {{ bd:serviceParam wikibase:language "en". }}
-            {{
-              SELECT DISTINCT ?username2 (SAMPLE(?image) as ?image) WHERE {{
-                ?itemIRI p:P2003 [ ps:P2003 ?username2 ] .
-                OPTIONAL {{
-                  ?itemIRI p:P18 [ ps:P18 ?image ] .
-                }}
-                FILTER(CONTAINS(LCASE(?username2), LCASE("{query}")) || CONTAINS(LCASE(?image), LCASE("{query}")))
-              }} GROUP BY ?username2
-            }}
+        OPTIONAL {{
+        ?usernameIRI swep:title ?title .
+        }}
+                  
+        OPTIONAL {{
+          ?usernameIRI swep:category ?categoryIRI .
+          ?categoryIRI rdfs:label ?category 
+        }}
+        FILTER(CONTAINS(LCASE(?username), LCASE("{query}")) || CONTAINS(LCASE(?title), LCASE("{query}")))
+    }}  GROUP BY ?username ?title
+        {cat_filter}
+    """
+
+    # print(q1)
+    sparql.setQuery(q1)
+
+    local = sparql.queryAndConvert()["results"]["bindings"]
+    # print()
+    # print("LOCAL")
+    # print()
+    # print(local)
+    # print()
+    # print()
+    username_values = ""
+
+    for row in local:
+       username_values += f"\"{row['username']['value']}\"" + " "
+
+    # print(username_values.strip())
+
+    q2 = f"""
+    PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+    PREFIX swep: <http://semweebs.org/property/>
+    PREFIX bd: <http://www.bigdata.com/rdf#>
+    PREFIX wikibase: <http://wikiba.se/ontology#>
+    PREFIX p: <http://www.wikidata.org/prop/>
+    PREFIX ps: <http://www.wikidata.org/prop/statement/>
+    PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+
+    SELECT ?username ?image WHERE {{
+      OPTIONAL {{
+        SERVICE <https://query.wikidata.org/sparql> {{
+          SERVICE wikibase:label {{ bd:serviceParam wikibase:language "en". }}
+          {{
+            SELECT DISTINCT ?username (COALESCE(SAMPLE(?image), "") AS ?image) WHERE {{
+              VALUES ?username {{ {username_values.strip()} }}
+              ?itemIRI p:P2003 [ ps:P2003 ?username ] .
+              OPTIONAL {{ ?itemIRI p:P18 [ ps:P18 ?image ] }}
+            }} GROUP BY ?username
           }}
         }}
       }}
-      FILTER(?username = ?username2)
     }}
-    """
+  """
+    # print(q2)
+    sparql.setQuery(q2)
 
-    print(qq)
-    sparql.setQuery(qq)
+    res_images = sparql.queryAndConvert()["results"]["bindings"]
+    # print("=====")
+    # print(res_images)
+    # print("=====")
+
+    image_by_username = {item['username']['value']: item['image'] for item in res_images}
+
+    joined_data = [
+       {**item, "image": image_by_username.get(item['username']['value'])}
+       for item in local
+    ]
+
     
-    return sparql.queryAndConvert()["results"]["bindings"]
+    # print(f"{joined_data=}")
+
+
+    return joined_data
 
 def get_suggestions(account_username: str):
     sparql.setQuery(f""" 
